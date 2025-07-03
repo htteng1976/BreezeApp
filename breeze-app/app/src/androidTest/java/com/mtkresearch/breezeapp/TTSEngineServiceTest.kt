@@ -10,6 +10,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import java.util.concurrent.CountDownLatch
 
 @RunWith(AndroidJUnit4::class)
 class TTSEngineServiceTest {
@@ -22,8 +23,8 @@ class TTSEngineServiceTest {
     }
 
     @Test
-    fun testServiceActivation() {
-
+    fun testTTSEngineServiceSpeak() {
+        val latch = CountDownLatch(1)
         val context = ApplicationProvider.getApplicationContext<Context>()
         val intent = Intent(context, TTSEngineService::class.java)
 
@@ -36,6 +37,12 @@ class TTSEngineServiceTest {
         val service = (binder as TTSEngineService.LocalBinder).service
         assertTrue("bind TTSEngineService failed.", service != null)
 
+        service.initialize().thenAccept { initResult ->
+            assertTrue("init TTSEngineService failed.", initResult)
+            latch.countDown()
+        }
+
+        latch.await()
     }
 
 
