@@ -24,9 +24,11 @@ class TTSEngineServiceTest {
 
     @Test
     fun testTTSEngineServiceSpeak() {
+
         val latch = CountDownLatch(1)
         val context = ApplicationProvider.getApplicationContext<Context>()
         val intent = Intent(context, TTSEngineService::class.java)
+        val message = "測試中請稍後"
 
         // start TTSEngineService
         val componentName = context.startService(intent)
@@ -39,7 +41,13 @@ class TTSEngineServiceTest {
 
         service.initialize().thenAccept { initResult ->
             assertTrue("init TTSEngineService failed.", initResult)
-            latch.countDown()
+            service.speak(message).thenRun {
+                latch.countDown()
+            }.exceptionally { exception ->
+                assertTrue("TTSEngineService.speak() failed.", true)
+                null
+            }
+
         }
 
         latch.await()
