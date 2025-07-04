@@ -18,17 +18,22 @@ class TTSEngineServiceTest {
     @get:Rule
     val serviceRule = ServiceTestRule()
 
-    companion object {
-        const val TAG = "TTSEngineServiceTest"
-    }
-
+    /**
+     * Test [TTSEngineService.speak]
+     *
+     * Test functions:
+     *  - TTSEngineService.initialize()
+     *  - TTSEngineService.ready()
+     *  - TTSEngineService.speak()
+     *  - TTSEngineService.stopSpeaking()
+     */
     @Test
     fun testTTSEngineServiceSpeak() {
 
         val latch = CountDownLatch(1)
         val context = ApplicationProvider.getApplicationContext<Context>()
         val intent = Intent(context, TTSEngineService::class.java)
-        val message = "測試中請稍後"
+        val speakMessage = "今天天氣真好"
 
         // start TTSEngineService
         val componentName = context.startService(intent)
@@ -41,13 +46,15 @@ class TTSEngineServiceTest {
 
         service.initialize().thenAccept { initResult ->
             assertTrue("init TTSEngineService failed.", initResult)
-            service.speak(message).thenRun {
+            assertTrue("TTSEngineService is not ready.", service.isReady)
+            service.speak(speakMessage).thenRun {
+                service.stopSpeaking()
                 latch.countDown()
             }.exceptionally { exception ->
-                assertTrue("TTSEngineService.speak() failed.", true)
+                service.stopSpeaking()
+                assertTrue("exception detected: ${exception.message}", true)
                 null
             }
-
         }
 
         latch.await()
